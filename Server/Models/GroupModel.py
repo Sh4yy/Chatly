@@ -3,6 +3,14 @@ from Utilities.Generator import id_generator
 
 
 class Group(Document):
+
+    meta = {'indexes': [
+        {{'fields': ['$username'],
+          'default_language': 'english',
+          'weights': {'title': 10}}
+         }
+    ]}
+
     id = StringField(primary_key=True)
     admin_id = StringField()
     username = StringField()
@@ -19,6 +27,10 @@ class Group(Document):
     @classmethod
     def find(cls, *args, **kwargs):
         return cls.objects.filter(*args, **kwargs).first()
+
+    @classmethod
+    def find_username(cls, username):
+        return cls.objects.search_text(username)
 
     def add_user(self, user):
         """

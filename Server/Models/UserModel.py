@@ -24,6 +24,13 @@ class Session(Document):
 
 class User(Document):
 
+    meta = {'indexes': [
+        {{'fields': ['$username'],
+          'default_language': 'english',
+          'weights': {'title': 10}}
+         }
+    ]}
+
     id = StringField(primary_key=True)
     first_name = StringField()
     last_name = StringField()
@@ -42,3 +49,8 @@ class User(Document):
     @classmethod
     def find(cls, *args, **kwargs):
         return cls.objects.filter(*args, **kwargs).first()
+
+    @classmethod
+    def find_username(cls, username):
+        return cls.objects.search_text(username)
+

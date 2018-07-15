@@ -17,7 +17,7 @@ redis = None
 def init_redis():
 
     global redis
-    redis = Redis(Config.default().redis_uri)
+    redis = Redis(Config.default().redis_uri,13010,password=Config.default().redis_password)
     return redis
 
 

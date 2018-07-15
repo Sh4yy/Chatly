@@ -1,5 +1,7 @@
-from Models import User, Group
+from Models import User, Group, Session, Message
 from .database import redis
+from time import time
+from main import socketio
 
 
 def is_group(id):
@@ -33,7 +35,10 @@ class ChatController:
         :param sid: socket's sid
         :param token: handshake's token
         """
-        pass
+        session = Session.find(token=token)
+        redis.hset('sid-id', sid, session.user_id)
+        redis.hset('id-sid', session.user_id, sid)
+        return session.user_id
 
     @classmethod
     def user_left(cls, sid):
@@ -42,7 +47,10 @@ class ChatController:
         from the server. delete its sid
         :param sid: socket's sid
         """
-        pass
+        id = redis.hget('sid-id', sid)
+        redis.hdel('sid-id', sid)
+        redis.hdel('id-sid', id)
+        return id
 
     @classmethod
     def get_user_sid(cls, user_id):
@@ -51,7 +59,7 @@ class ChatController:
         :param user_id: user's id
         :return: sid if exists, else None
         """
-        pass
+        return redis.hget('id-sid', user_id)
 
     @classmethod
     def get_sid_id(cls, sid):
@@ -61,10 +69,17 @@ class ChatController:
         :param sid: socket session id
         :return: user id if exists, else None
         """
-        pass
+        return redis.hget('sid-id', sid)
 
     @classmethod
     def new_msg(cls, sender_id, recipient_id, text):
+        """
+        when a user sends a new message to the server
+        :param sender_id: sender's id
+        :param recipient_id: recipient (group/user) id
+        :param text: message's text
+        :return:
+        """
 
         sender = User.find(id=sender_id)
         sender_sid = cls.get_user_sid(sender.id)
@@ -81,6 +96,7 @@ class ChatController:
 
     @classmethod
     def _broadcast_group(cls, sender, sender_sid, group, text):
+        # todo make this method async
         """
         broadcast a new message to a group chat
         :param sender: sender's instance
@@ -89,10 +105,12 @@ class ChatController:
         :param text: message text
         :return:
         """
-        pass
+        for recipient in group.get_users():
+            cls._broadcast_user(sender, sender_sid, recipient, text, chat_id=group.id)
 
     @classmethod
     def _broadcast_user(cls, sender, sender_sid, recipient, text, chat_id=None):
+        # todo make this method async
         """
         broadcast a new message to a user
         :param sender: sender's instance
@@ -102,4 +120,24 @@ class ChatController:
         :param chat_id: optional chat id if is in group
         :return:
         """
-        pass
+        recipient_sid = cls.get_user_sid(recipient.id)
+        if not recipient_sid:
+            cls._cache_msg(sender.id, recipient.id, text, chat_id)
+            return
+        data = {'sender_id': sender.id, 'recipient_id': recipient.id,
+                'text': text, 'chat_id': chat_id or 'private', 'time': time()}
+        socketio.send(data=data, json=True, namespace='/chat', room=recipient_sid)
+
+    @classmethod
+    def _cache_msg(cls, sender_id, recipient_id, text, chat_id=None):
+        # todo make this method async
+        """
+        cache a message that failed to be delivered
+        :param sender_id: sender's object id
+        :param recipient_id: recipient's object id
+        :param text: message's text
+        :param chat_id: chat id if in group
+        :return:
+        """
+        message = Message(sender_id, recipient_id, text, chat_id)
+        return message

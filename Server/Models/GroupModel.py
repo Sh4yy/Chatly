@@ -1,6 +1,7 @@
 from mongoengine import *
 from Utilities.Generator import id_generator
 from Models import User
+import re
 
 
 class Group(Document):
@@ -23,19 +24,23 @@ class Group(Document):
         temp.id = "G{}".format(id_generator(9))
         temp.admin_id = admin_id
         temp.username = username.lower()
-        temp.members = list()
+        temp.members = [admin_id]
         temp.title = title
         temp.save()
         return temp
 
-    def make_json(self):
-        return {
+    def make_json(self, include_members=True):
+        data = {
             "id": self.id,
             "admin_id": self.admin_id,
             "username": self.username,
-            "title": self.title,
-            "members": [user.make_json() for user in self.get_users()]
+            "title": self.title
         }
+
+        if include_members:
+            data["members"] = [user.make_json() for user in self.get_users()]
+
+        return data
 
     def get_users(self):
         """
@@ -51,7 +56,8 @@ class Group(Document):
 
     @classmethod
     def find_username(cls, username):
-        return cls.objects.filter(username="\{}\\".format(username))
+        username_re = re.compile('.*{}.*'.format(username))
+        return cls.objects.filter(username=username_re)
 
     def add_user(self, user):
         """
@@ -63,6 +69,7 @@ class Group(Document):
         if self.has_user(user):
             return False
         self.members.append(user.id)
+        self.save()
         return True
 
     def has_user(self, user):
@@ -85,6 +92,7 @@ class Group(Document):
         if not self.has_user(user):
             return False
         self.members.remove(user.id)
+        self.save()
         return True
 
     def __eq__(self, other):

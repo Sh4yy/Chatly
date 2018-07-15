@@ -1,11 +1,12 @@
 import gevent.monkey; gevent.monkey.patch_all()
 from flask import Flask
 from flask_socketio import SocketIO
-from Routes import AuthRoutes
+from Routes import AuthRoutes, ChatRoutes
 from Controllers import database
 
 app = Flask(__name__)
 app.register_blueprint(AuthRoutes.mod)
+app.register_blueprint(ChatRoutes.mod)
 
 socketio = SocketIO(app)
 

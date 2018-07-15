@@ -1,6 +1,7 @@
 from mongoengine import *
 from Utilities.Generator import id_generator
 from time import time
+import re
 
 
 class Session(Document):
@@ -44,7 +45,6 @@ class Session(Document):
 
 
 class User(Document):
-
     id = StringField(primary_key=True)
     first_name = StringField()
     last_name = StringField()
@@ -84,7 +84,8 @@ class User(Document):
 
     @classmethod
     def find_username(cls, username):
-        return cls.objects.filter(username="\{}\\".format(username))
+        username_re = re.compile('.*{}.*'.format(username))
+        return cls.objects.filter(username=username_re)
 
     def __eq__(self, other):
         return self.id == other.id

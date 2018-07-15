@@ -1,5 +1,5 @@
 from mongoengine import connect
-from Server.Utilities.Config import Config
+from Utilities.Config import Config
 from redis import Redis
 
 

@@ -44,3 +44,9 @@ class Message(Document):
     @classmethod
     def find_recipient(cls, user):
         return cls.objects.filter(recipient_id=user.id)
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __ne__(self, other):
+        return self.id != other.id

@@ -106,7 +106,9 @@ class ChatController:
         :return:
         """
         for recipient in group.get_users():
-            cls._broadcast_user(sender, sender_sid, recipient, text, chat_id=group.id)
+            if recipient == sender:
+                continue
+            cls._broadcast_user(sender, sender_sid, recipient, text, group.id)
 
     @classmethod
     def _broadcast_user(cls, sender, sender_sid, recipient, text, chat_id=None):

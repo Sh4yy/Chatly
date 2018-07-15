@@ -1,5 +1,5 @@
 from mongoengine import connect
-from Utilities.Config import Config
+from Server.Utilities.Config import Config
 from redis import Redis
 
 
@@ -17,7 +17,6 @@ redis = None
 def init_redis():
 
     global redis
-    redis = Redis(Config.default().redis_uri)
+    redis = Redis.from_url(Config.default().redis_uri)
     return redis
 
-init_redis()

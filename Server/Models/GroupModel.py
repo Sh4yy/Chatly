@@ -91,3 +91,9 @@ class Group(Document):
             return False
         self.members.remove(user.id)
         return True
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __ne__(self, other):
+        return self.id != other.id

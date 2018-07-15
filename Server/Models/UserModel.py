@@ -34,6 +34,12 @@ class Session(Document):
     def find(cls, *args, **kwargs):
         return cls.objects.filter(*args, **kwargs).first()
 
+    def __eq__(self, other):
+        return self.token == other.token
+
+    def __ne__(self, other):
+        return self.token != other.token
+
 
 class User(Document):
 
@@ -82,4 +88,10 @@ class User(Document):
     @classmethod
     def find_username(cls, username):
         return cls.objects.search_text(username)
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __ne__(self, other):
+        return self.id != other.id
 

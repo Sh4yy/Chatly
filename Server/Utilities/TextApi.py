@@ -1,7 +1,11 @@
 from twilio.rest import Client
 from .Generator import id_generator
 from .Config import Config
+<<<<<<< HEAD
 from Controllers.database import redis
+=======
+from Controllers.database import init_redis
+>>>>>>> 6bdc1c2487f375e2b61a6a7a55ff22169b744dcc
 
 
 

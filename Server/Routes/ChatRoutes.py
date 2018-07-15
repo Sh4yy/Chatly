@@ -1,8 +1,8 @@
-from flask import Blueprint, request, abort, jsonify
-from Utilities.TextApi import TextAPI
+from flask import Blueprint, request, abort
 from Routes.RouteMethods import response, error_response, authorized
-from Models import User, Session, Group
-from schema import Schema, Optional, SchemaError
+from Models import User, Group, Message
+from schema import Schema, SchemaError, Optional
+from Controllers.ChatController import ChatController
 
 
 mod = Blueprint('chat_routes', __name__)
@@ -30,7 +30,7 @@ def username_available(username, user, session):
     return response({'username': username, 'available': available})
 
 
-@mod.route('/group', methods=['CREATE'])
+@mod.route('/group', methods=['POST'])
 @authorized
 def create_group(user, session):
 
@@ -43,6 +43,11 @@ def create_group(user, session):
 
     title = json['title']
     username = json['username']
+
+    users = User.find_username(username)
+    groups = Group.find_username(username)
+    if users or groups:
+        return error_response('username has been already taken')
 
     group = Group.new(user.id, title, username)
     return response({'group': group.make_json()})
@@ -87,3 +92,48 @@ def leave_group(username, user, session):
     return response({'joined': True,
                      'group': group.make_json()})
 
+
+@mod.route('/my/groups', methods=['GET'])
+@authorized
+def get_my_groups(user, session):
+
+    groups = Group.objects.filter(members=user.id)
+    return response({'groups': [group.make_json() for group in groups]})
+
+
+@mod.route('/my/updates', methods=['GET'])
+@authorized
+def get_my_updates(user, session):
+
+    messages = Message.objects.filter(recipient_id=user.id)
+    messages_data = [message.make_json() for message in messages]
+    [message.delete() for message in messages]
+    return response({'messages': messages_data})
+
+
+@mod.route('/my/account', methods=['GET'])
+@authorized
+def get_my_account(user, session):
+    return response({'user': user.make_json()})
+
+
+@mod.route('/send/message', methods=['POST'])
+@authorized
+def send_message(user, session):
+
+    json = request.json
+    schema = Schema({'to': str, 'text': str})
+    try:
+        schema.validate(json)
+    except SchemaError as err:
+        return response(err.code)
+
+    to = json['to']
+    text = json['text']
+
+    try:
+        ChatController.new_msg(user.id, to, text)
+    except Exception as err:
+        return error_response(str(err))
+
+    return response({'sent': True})

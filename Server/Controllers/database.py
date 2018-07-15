@@ -2,6 +2,8 @@ from mongoengine import connect
 from Utilities.Config import Config
 from redis import Redis
 
+socketio = None
+
 
 def init_mongo():
     host = "mongodb://{}:{}@{}/{}".format(Config.default().db_user,

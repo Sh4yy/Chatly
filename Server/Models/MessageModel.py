@@ -13,7 +13,7 @@ class Message(Document):
 
     @classmethod
     def new(cls, sender_id, recipient_id, text,
-                 chat_id=None):
+            chat_id=None):
         """
         initialize a new cached message
         :param sender_id: sender's user id
@@ -36,6 +36,7 @@ class Message(Document):
             "sender_id": self.sender_id,
             "recipient_id": self.recipient_id,
             "created_date": self.created_date,
+            "text": self.text,
             "chat_id": self.chat_id or 'private'
         }
 

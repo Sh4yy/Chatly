@@ -1,7 +1,7 @@
 from Models import User, Group, Session, Message
 from .database import redis
 from time import time
-from main import socketio
+from .database import socketio
 
 
 def is_group(id):
@@ -85,14 +85,31 @@ class ChatController:
         sender_sid = cls.get_user_sid(sender.id)
 
         if is_group(recipient_id):
+
             recipient_group = Group.find(id=recipient_id)
+
+            if not recipient_group:
+                raise Exception('recipient was not found')
+            if not recipient_group.has_user(sender):
+                raise Exception('user is not a member of this group')
+
             cls._broadcast_group(sender, sender_sid,
                                  recipient_group, text)
 
         elif is_user(recipient_id):
+
             recipient = User.find(id=recipient_id)
+
+            if not recipient:
+                raise Exception('recipient was not found')
+
             cls._broadcast_user(sender, sender_sid, recipient,
                                 text)
+
+        else:
+
+            raise Exception('bad recipient id')
+
 
     @classmethod
     def _broadcast_group(cls, sender, sender_sid, group, text):
@@ -141,5 +158,5 @@ class ChatController:
         :param chat_id: chat id if in group
         :return:
         """
-        message = Message(sender_id, recipient_id, text, chat_id)
+        message = Message.new(sender_id, recipient_id, text, chat_id)
         return message

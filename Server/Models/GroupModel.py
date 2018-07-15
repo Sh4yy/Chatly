@@ -1,5 +1,6 @@
 from mongoengine import *
 from Utilities.Generator import id_generator
+from Models import User
 
 
 class Group(Document):
@@ -23,6 +24,22 @@ class Group(Document):
         self.username = username.lower()
         self.members = list()
         self.save()
+
+    def make_json(self):
+        return {
+            "id": self.id,
+            "admin_id": self.admin_id,
+            "username": self.username,
+            "members": [user.make_json() for user in self.get_users()]
+        }
+
+    def get_users(self):
+        """
+        get a list of member instances
+        for this group
+        :return: [User]
+        """
+        return User.objects.filter(id__in=self.members)
 
     @classmethod
     def find(cls, *args, **kwargs):

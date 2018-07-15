@@ -17,6 +17,13 @@ class Session(Document):
         self.ip = ip
         self.save()
 
+    def make_json(self):
+        return {
+            "token": self.token,
+            "user_id": self.user_id,
+            "created_date": self.created_date
+        }
+
     @classmethod
     def find(cls, *args, **kwargs):
         return cls.objects.filter(*args, **kwargs).first()
@@ -45,6 +52,14 @@ class User(Document):
         self.username = username.lower()
         self.phone_num = phone_num
         self.save()
+
+    def make_json(self):
+        return {
+            "id": self.id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "username": self.username
+        }
 
     @classmethod
     def find(cls, *args, **kwargs):

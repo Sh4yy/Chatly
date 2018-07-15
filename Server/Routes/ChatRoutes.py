@@ -64,6 +64,16 @@ def find_group(username, user, session):
     return response({'group': group.make_json()})
 
 
+@mod.route('/user/<username>', methods=['GET'])
+@authorized
+def find_user(username, user, session):
+
+    user = User.find(username=username)
+    if not user:
+        abort(404)
+    return response({'user': user.make_json()})
+
+
 @mod.route('/group/<username>/join', methods=['POST'])
 @authorized
 def join_group(username, user, session):

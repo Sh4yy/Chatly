@@ -1,8 +1,9 @@
 from mongoengine import connect
 from Utilities.Config import Config
 from redis import Redis
+from flask_socketio import SocketIO
 
-socketio = None
+socketio = SocketIO()
 
 
 def init_mongo():
@@ -19,7 +20,7 @@ redis = None
 def init_redis():
 
     global redis
-    redis = Redis(Config.default().redis_uri,13010,password=Config.default().redis_password)
+    redis = Redis(Config.default().redis_uri, 13010, password=Config.default().redis_password)
     return redis
 
 

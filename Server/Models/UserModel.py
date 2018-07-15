@@ -9,19 +9,21 @@ class Session(Document):
     created_date = FloatField()
     ip = StringField()
 
-    def __init__(self, user_id, ip=None, *args, **kwargs):
+    @classmethod
+    def new(cls, user_id, ip=None):
         """
         initialize a new authentication
         session for a user
         :param user_id: user's id
         :param ip: user's ip (optional)
         """
-        super(Document, self).__init__(*args, **kwargs)
-        self.token = "{}:{}".format(user_id, id_generator(10))
-        self.user_id = user_id
-        self.created_date = time()
-        self.ip = ip
-        self.save()
+        temp = cls()
+        temp.token = "{}:{}".format(user_id, id_generator(10))
+        temp.user_id = user_id
+        temp.created_date = time()
+        temp.ip = ip
+        temp.save()
+        return temp
 
     def make_json(self):
         return {
@@ -43,21 +45,15 @@ class Session(Document):
 
 class User(Document):
 
-    meta = {'indexes': [
-        {{'fields': ['$username'],
-          'default_language': 'english',
-          'weights': {'title': 10}}
-         }
-    ]}
-
     id = StringField(primary_key=True)
     first_name = StringField()
     last_name = StringField()
     username = StringField(unique=True)
     phone_num = StringField(unique=True)
 
-    def __init__(self, first_name, last_name, username,
-                 phone_num, *args, **kwargs):
+    @classmethod
+    def new(cls, first_name, last_name, username,
+            phone_num):
         """
         initialize a new user
         :param first_name: user's first name
@@ -65,13 +61,14 @@ class User(Document):
         :param username: user's username
         :param phone_num: user's phone number
         """
-        super(Document, self).__init__(*args, **kwargs)
-        self.id = "U{}".format(id_generator(9))
-        self.first_name = first_name
-        self.last_name = last_name
-        self.username = username.lower()
-        self.phone_num = phone_num
-        self.save()
+        temp = cls()
+        temp.id = "U{}".format(id_generator(9))
+        temp.first_name = first_name
+        temp.last_name = last_name
+        temp.username = username.lower()
+        temp.phone_num = phone_num
+        temp.save()
+        return temp
 
     def make_json(self):
         return {
@@ -87,7 +84,7 @@ class User(Document):
 
     @classmethod
     def find_username(cls, username):
-        return cls.objects.search_text(username)
+        return cls.objects.filter(username="\{}\\".format(username))
 
     def __eq__(self, other):
         return self.id == other.id

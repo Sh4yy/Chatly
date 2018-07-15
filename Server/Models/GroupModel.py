@@ -5,33 +5,28 @@ from Models import User
 
 class Group(Document):
 
-    meta = {'indexes': [
-        {{'fields': ['$username'],
-          'default_language': 'english',
-          'weights': {'title': 10}}
-         }
-    ]}
-
     id = StringField(primary_key=True)
     admin_id = StringField()
     title = StringField()
     username = StringField()
     members = ListField(StringField())
 
-    def __init__(self, admin_id, title, username, *args, **kwargs):
+    @classmethod
+    def new(cls, admin_id, title, username):
         """
         initialize a new group chat
         :param admin_id: group's creator
         :param title: group's title
         :param username: group's username
         """
-        super(Document).__init__(*args, **kwargs)
-        self.id = "G{}".format(id_generator(9))
-        self.admin_id = admin_id
-        self.username = username.lower()
-        self.members = list()
-        self.title = title
-        self.save()
+        temp = cls()
+        temp.id = "G{}".format(id_generator(9))
+        temp.admin_id = admin_id
+        temp.username = username.lower()
+        temp.members = list()
+        temp.title = title
+        temp.save()
+        return temp
 
     def make_json(self):
         return {
@@ -56,7 +51,7 @@ class Group(Document):
 
     @classmethod
     def find_username(cls, username):
-        return cls.objects.search_text(username)
+        return cls.objects.filter(username="\{}\\".format(username))
 
     def add_user(self, user):
         """

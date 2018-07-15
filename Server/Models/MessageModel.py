@@ -11,8 +11,9 @@ class Message(Document):
     chat_id = StringField()
     created_date = FloatField()
 
-    def __init__(self, sender_id, recipient_id, text,
-                 chat_id=None, *args, **kwargs):
+    @classmethod
+    def new(cls, sender_id, recipient_id, text,
+                 chat_id=None):
         """
         initialize a new cached message
         :param sender_id: sender's user id
@@ -20,14 +21,15 @@ class Message(Document):
         :param text: message's text
         :param chat_id: optional chat id if in group
         """
-        super(Document).__init__(*args, **kwargs)
-        self.id = "M{}".format(id_generator(9))
-        self.sender_id = sender_id
-        self.recipient_id = recipient_id
-        self.text = text
-        self.created_date = time()
-        self.chat_id = chat_id
-        self.save()
+        temp = cls()
+        temp.id = "M{}".format(id_generator(9))
+        temp.sender_id = sender_id
+        temp.recipient_id = recipient_id
+        temp.text = text
+        temp.created_date = time()
+        temp.chat_id = chat_id
+        temp.save()
+        return temp
 
     def make_json(self):
         return {

@@ -1,6 +1,6 @@
-from flask import Flask, Blueprint, request, abort, jsonify
+from flask import Blueprint, request, abort, jsonify
 from Utilities.TextApi import TextAPI
-from Routes.RouteMethods import response, error_response, check_json
+from Routes.RouteMethods import response, error_response, authorized
 from Models import User, Session
 from schema import Schema, Optional, SchemaError
 
@@ -19,7 +19,9 @@ def verify_phone():
 
     phone = json['phone']
     TextAPI.begin_auth(phone)
-    return jsonify({'ok': True})
+    user = User.find(phone_num=phone)
+
+    return jsonify({'ok': True, 'signed_up': user is not None})
 
 
 @mod.route('/auth/register', methods=['POST'])
@@ -48,11 +50,14 @@ def register():
     token = json['token']
     phone = json['phone']
 
+    if User.find(username=username):
+        return error_response("username already exists")
+
     if not TextAPI.verify_auth(phone, token):
         return error_response('invalid phone authentication')
 
-    user = User(first_name, last_name, username, phone)
-    session = Session(user.id)
+    user = User.new(first_name, last_name, username, phone)
+    session = Session.new(user.id)
     return response({'user': user.make_json(),
                      'session': session.make_json()})
 
@@ -81,27 +86,17 @@ def login():
     if not user:
         return error_response('user is not registered')
 
-    session = Session(user.id)
+    session = Session.new(user.id)
     return response({'user': user.make_json(),
                      'session': session.make_json()})
 
 
 @mod.route('/auth/logout', methods=['POST'])
-def logout():
+@authorized
+def logout(user, session):
     """
     logout and delete a previous session token
     """
-
-    auth = request.authorization
-    if not auth:
-        return error_response("missing authorization header")
-    method, auth_token = auth.split()
-    if method != 'bearer':
-        return error_response('bad authorization method')
-
-    session = Session.find(token=auth_token)
-    if not session:
-        return error_response('invalid auth token')
 
     session.delete()
     return response({'logged_out': True})

@@ -1,6 +1,7 @@
 from twilio.rest import Client
 from .Generator import id_generator
 from .Config import Config
+import requests
 
 from Controllers.database import redis
 
@@ -19,9 +20,8 @@ class TextAPI:
         client.messages.create(to=str(phone_num),
                                from_="4433414409",
                                body="Thank you for signing up for Chatly. Your access token: {}".format(token))
-        redis.set(phone_num, token,ex=900)
+        redis.set(phone_num, token, ex=900)
         return token
-
 
     @staticmethod
     def verify_auth(phone_num, token):
@@ -31,9 +31,8 @@ class TextAPI:
         :param token token that user entered
         """
 
-        if redis.get(phone_num) == token:
+        _token = redis.get(phone_num).decode("utf-8")
+        if _token == token:
             return True
         return False
 
-
-textApi = TextAPI()

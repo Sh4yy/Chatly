@@ -1,5 +1,7 @@
 import unittest
-from Server.Utilities.TextApi import TextAPI
+
+from Controllers.database import redis
+from Utilities.TextAPI import TextAPI
 
 
 
@@ -9,7 +11,8 @@ class TestTextApi(unittest.TestCase):
         txt = TextAPI()
         token = txt.begin_auth(4436145125)
 
-        self.assertEquals(txt.db.get(4436145125),token)
+        self.assertEquals(redis.get(4436145125),token)
+
 
 
 

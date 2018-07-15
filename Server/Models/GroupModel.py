@@ -14,15 +14,23 @@ class Group(Document):
 
     id = StringField(primary_key=True)
     admin_id = StringField()
+    title = StringField()
     username = StringField()
     members = ListField(StringField())
 
-    def __init__(self, admin_id, username, *args, **kwargs):
+    def __init__(self, admin_id, title, username, *args, **kwargs):
+        """
+        initialize a new group chat
+        :param admin_id: group's creator
+        :param title: group's title
+        :param username: group's username
+        """
         super(Document).__init__(*args, **kwargs)
         self.id = "G{}".format(id_generator(9))
         self.admin_id = admin_id
         self.username = username.lower()
         self.members = list()
+        self.title = title
         self.save()
 
     def make_json(self):
@@ -30,6 +38,7 @@ class Group(Document):
             "id": self.id,
             "admin_id": self.admin_id,
             "username": self.username,
+            "title": self.title,
             "members": [user.make_json() for user in self.get_users()]
         }
 

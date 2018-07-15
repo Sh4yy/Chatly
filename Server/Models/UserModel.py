@@ -10,6 +10,12 @@ class Session(Document):
     ip = StringField()
 
     def __init__(self, user_id, ip=None, *args, **kwargs):
+        """
+        initialize a new authentication
+        session for a user
+        :param user_id: user's id
+        :param ip: user's ip (optional)
+        """
         super(Document, self).__init__(*args, **kwargs)
         self.token = "{}:{}".format(user_id, id_generator(10))
         self.user_id = user_id
@@ -41,10 +47,18 @@ class User(Document):
     id = StringField(primary_key=True)
     first_name = StringField()
     last_name = StringField()
-    username = StringField()
-    phone_num = StringField()
+    username = StringField(unique=True)
+    phone_num = StringField(unique=True)
 
-    def __init__(self, first_name, last_name, username, phone_num, *args, **kwargs):
+    def __init__(self, first_name, last_name, username,
+                 phone_num, *args, **kwargs):
+        """
+        initialize a new user
+        :param first_name: user's first name
+        :param last_name: user's last name (optional)
+        :param username: user's username
+        :param phone_num: user's phone number
+        """
         super(Document, self).__init__(*args, **kwargs)
         self.id = "U{}".format(id_generator(9))
         self.first_name = first_name

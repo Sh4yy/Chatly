@@ -11,7 +11,13 @@ def init_mongo():
     connect(Config.default().db_name, host=host)
 
 
+redis = None
+
+
 def init_redis():
 
+    global redis
     redis = Redis(Config.default().redis_uri)
     return redis
+
+init_redis()

@@ -74,6 +74,64 @@ def find_user(username, user, session):
     return response({'user': user.make_json()})
 
 
+@mod.route('/user/<username>/friend', methods=['POST'])
+@authorized
+def friend_user(username, user, session):
+
+    friend = User.find(username=username)
+    if not user:
+        abort(404)
+
+    if friend.is_blocked(user):
+        return error_response('you have been blocked by user')
+
+    user.friend(friend)
+    return response({'added': True,
+                     'friend': friend.make_json()})
+
+
+@mod.route('/user/<username>/unfriend', methods=['POST'])
+@authorized
+def unfriend_user(username, user, session):
+
+    friend = User.find(username=username)
+    if not user:
+        abort(404)
+
+    if not user.is_friends(friend):
+        return error_response('user is not a friend')
+
+    user.unfriend(friend)
+    return response({'unfriended': True})
+
+
+@mod.route('/user/<username>/block', methods=['POST'])
+@authorized
+def block_user(username, user, session):
+
+    target = User.find(username=username)
+    if not user:
+        abort(404)
+
+    user.block(target)
+    return response({'blocked': True})
+
+
+@mod.route('/user/<username>/unblock', methods=['POST'])
+@authorized
+def unblock_user(username, user, session):
+
+    target = User.find(username=username)
+    if not user:
+        abort(404)
+
+    if not user.is_blocked(target):
+        return error_response('user is not blocked')
+
+    user.unblock(target)
+    return response({'unblocked': True})
+
+
 @mod.route('/group/<username>/join', methods=['POST'])
 @authorized
 def join_group(username, user, session):
@@ -126,7 +184,23 @@ def get_my_updates(user, session):
 @mod.route('/my/account', methods=['GET'])
 @authorized
 def get_my_account(user, session):
-    return response({'user': user.make_json()})
+    return response({'user': user.make_json(True, True)})
+
+
+@mod.route('/my/friends', methods=['GET'])
+@authorized
+def get_my_friends(user, session):
+
+    users = User.objects.filter(id__in=user.friends)
+    return response({'friends': [user.make_json() for user in users]})
+
+
+@mod.route('/my/blocked', methods=['GET'])
+@authorized
+def get_my_blocked(user, session):
+
+    users = User.objects.filter(id__in=user.blocked)
+    return response({'blocked': [user.make_json() for user in users]})
 
 
 @mod.route('/send/message', methods=['POST'])

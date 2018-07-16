@@ -110,6 +110,11 @@ class ChatController:
         elif is_user(recipient_id):
 
             recipient = User.find(id=recipient_id)
+            if not sender.is_friends(recipient):
+                raise Exception('user is not friends with recipient')
+
+            if recipient.blocked(sender):
+                raise Exception('recipient has blocked you')
 
             if not recipient:
                 raise Exception('recipient was not found')

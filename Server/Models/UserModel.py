@@ -50,6 +50,8 @@ class User(Document):
     last_name = StringField()
     username = StringField(unique=True)
     phone_num = StringField(unique=True)
+    friends = ListField(StringField())
+    blocked = ListField(StringField())
 
     @classmethod
     def new(cls, first_name, last_name, username,
@@ -67,16 +69,103 @@ class User(Document):
         temp.last_name = last_name
         temp.username = username.lower()
         temp.phone_num = phone_num
+        temp.friends = []
         temp.save()
         return temp
 
-    def make_json(self):
-        return {
+    def make_json(self, include_friends=False, include_blocked=False):
+        data = {
             "id": self.id,
             "first_name": self.first_name,
             "last_name": self.last_name,
             "username": self.username
         }
+
+        if include_friends:
+            users = User.objects.filter(id__in=self.friends)
+            data['friends'] = [user.make_json() for user in users]
+
+        if include_blocked:
+            users = User.objects.filter(id__in=self.blocked)
+            data['blocked'] = [user.make_json() for user in users]
+
+        return data
+
+    def friend(self, user):
+        """
+        add a new friend to user's friends
+        :param user: user instance
+        :return: True on success
+        """
+        if self.is_friends(user):
+            return True
+
+        if self.is_blocked(user):
+            self.unblock(user)
+
+        self.friends.append(user.id)
+        self.save()
+        return True
+
+    def unfriend(self, user):
+        """
+        unfriend a user
+        :param user: user's instance
+        :return: True on success
+        """
+        if not self.is_friends(user):
+            return False
+
+        self.friends.remove(user.id)
+        self.save()
+        return True
+
+    def is_friends(self, user):
+        """
+        check to see whether a user
+        is already in this user's friends
+        :param user: user's instance
+        :return: True if friends
+        """
+        return user.id in self.friends
+
+    def block(self, user):
+        """
+        block a user
+        :param user: user's instance
+        :return: True on success
+        """
+        if self.is_blocked(user):
+            return True
+
+        if self.is_friends(user):
+            self.unfriend(user)
+
+        self.blocked.append(user.id)
+        self.save()
+        return True
+
+    def unblock(self, user):
+        """
+        unblock a user
+        :param user: user's instance
+        :return: True if user was unblocked
+        """
+        if not self.is_blocked(user):
+            return False
+
+        self.blocked.remove(user.id)
+        self.save()
+        return True
+
+    def is_blocked(self, user):
+        """
+        check to see if user has blocked
+        another user
+        :param user: user instance
+        :return: True if blocked
+        """
+        return user.id in self.blocked
 
     @classmethod
     def find(cls, *args, **kwargs):

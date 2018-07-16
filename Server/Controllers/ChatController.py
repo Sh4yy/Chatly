@@ -39,11 +39,6 @@ class ChatController:
         if not session:
             return False
 
-        # l1 = list(redis.hgetall('sid-id').keys())
-        # l2 = list(redis.hgetall('id-sid').keys())
-        # redis.hdel('sid-id', *l1)
-        # redis.hdel('id-sid', *l2)
-
         redis.hset('sid-id', sid, session.user_id)
         redis.hset('id-sid', session.user_id, sid)
         return True
@@ -126,6 +121,25 @@ class ChatController:
 
             raise Exception('bad recipient id')
 
+    @classmethod
+    def user_joined_group(cls, group, user):
+        """
+        broadcast a new user joining the group
+        :param group: group instance
+        :param user: user instance
+        """
+        text = "{} joined the group chat".format(user.username)
+        cls._broadcast_group(group, None, group, text)
+
+    @classmethod
+    def user_left_group(cls, group, user):
+        """
+        broadcast a user leaving the group
+        :param group: group instance
+        :param user: user instance
+        """
+        text = "{} left the group chat".format(user.username)
+        cls._broadcast_group(group, None, group, text)
 
     @classmethod
     def _broadcast_group(cls, sender, sender_sid, group, text):
@@ -162,7 +176,6 @@ class ChatController:
         data = {'sender_id': sender.id, 'recipient_id': recipient.id,
                 'text': text, 'chat_id': chat_id or 'private', 'time': time()}
         app.socketio.emit('message', data, room=recipient_sid)
-
 
     @classmethod
     def _cache_msg(cls, sender_id, recipient_id, text, chat_id=None):

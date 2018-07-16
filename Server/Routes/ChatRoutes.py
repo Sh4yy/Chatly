@@ -83,6 +83,7 @@ def join_group(username, user, session):
         abort(404)
 
     group.add_user(user)
+    ChatController.user_joined_group(group, user)
     return response({'joined': True,
                      'group': group.make_json()})
 
@@ -99,6 +100,7 @@ def leave_group(username, user, session):
         return error_response('you are not a member of this group')
 
     group.remove_user(user)
+    ChatController.user_left_group(group, user)
     return response({'joined': True,
                      'group': group.make_json()})
 

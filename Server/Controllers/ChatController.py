@@ -1,7 +1,7 @@
 from Models import User, Group, Session, Message
 from .database import redis
 from time import time
-from .database import socketio
+import app
 
 
 def is_group(id):
@@ -36,9 +36,17 @@ class ChatController:
         :param token: handshake's token
         """
         session = Session.find(token=token)
+        if not session:
+            return False
+
+        # l1 = list(redis.hgetall('sid-id').keys())
+        # l2 = list(redis.hgetall('id-sid').keys())
+        # redis.hdel('sid-id', *l1)
+        # redis.hdel('id-sid', *l2)
+
         redis.hset('sid-id', sid, session.user_id)
         redis.hset('id-sid', session.user_id, sid)
-        return session.user_id
+        return True
 
     @classmethod
     def user_left(cls, sid):
@@ -50,7 +58,7 @@ class ChatController:
         id = redis.hget('sid-id', sid)
         redis.hdel('sid-id', sid)
         redis.hdel('id-sid', id)
-        return id
+        return id.decode("utf-8")
 
     @classmethod
     def get_user_sid(cls, user_id):
@@ -59,7 +67,11 @@ class ChatController:
         :param user_id: user's id
         :return: sid if exists, else None
         """
-        return redis.hget('id-sid', user_id)
+
+        sid = redis.hget('id-sid', user_id)
+        if not sid:
+            return None
+        return sid.decode("utf-8")
 
     @classmethod
     def get_sid_id(cls, sid):
@@ -69,7 +81,11 @@ class ChatController:
         :param sid: socket session id
         :return: user id if exists, else None
         """
-        return redis.hget('sid-id', sid)
+
+        id = redis.hget('sid-id', sid)
+        if not id:
+            return None
+        return id.decode("utf-8")
 
     @classmethod
     def new_msg(cls, sender_id, recipient_id, text):
@@ -145,7 +161,8 @@ class ChatController:
             return
         data = {'sender_id': sender.id, 'recipient_id': recipient.id,
                 'text': text, 'chat_id': chat_id or 'private', 'time': time()}
-        socketio.send(data=data, json=True, namespace='/chat', room=recipient_sid)
+        app.socketio.emit('message', data, room=recipient_sid)
+
 
     @classmethod
     def _cache_msg(cls, sender_id, recipient_id, text, chat_id=None):

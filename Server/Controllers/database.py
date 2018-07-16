@@ -1,9 +1,6 @@
 from mongoengine import connect
 from Utilities.Config import Config
 from redis import Redis
-from flask_socketio import SocketIO
-
-socketio = SocketIO()
 
 
 def init_mongo():
